@@ -24,6 +24,7 @@ export default class FlatListExample extends Component {
     contacts: [],
     allContacts: [],
     page: 1,
+    refreshing: false
   };
   constructor() {
     super();
@@ -46,12 +47,28 @@ export default class FlatListExample extends Component {
     );
 
     const users = [...this.state.contacts, ...contacts];
+
+    if (this.state.refreshing) {
+      users.reverse()
+    }
     this.setState({
       contacts: users,
       loading: false,
       allContacts: users,
+      refreshing: false
     });
   };
+  onRefresh = () => {
+    this.setState(
+      {
+        page: 1,
+        refreshing: true,
+      },
+      () => {
+        this.getContacts();
+      },
+    );
+  }
 
   loadMore = () => {
     if (!this.duringMomentum) {
@@ -136,6 +153,8 @@ export default class FlatListExample extends Component {
           keyExtractor={(item, index) => index.toString()} // veya keyExtractor={ item=> item._id }
           onEndReached={this.loadMore}
           onEndReachedThreshold={isIOS ? 1 : 20} // 0 ise sadece en dibe geldiginizde loadMore yapılır
+          refreshing={this.state.refreshing}
+          onRefresh={this.onRefresh}
         />
       </SafeAreaView>
     );
