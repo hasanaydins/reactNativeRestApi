@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {StyleSheet, Dimensions, SafeAreaView, Text} from 'react-native';
+import {StyleSheet, Dimensions, SafeAreaView, Text, Button} from 'react-native';
 import FlatListExample from './src/components/FlatList';
 import axios from 'axios';
 
@@ -9,20 +9,30 @@ export default class App extends Component {
   state = {
     name: '',
     surname: '',
-    loading: true
+    loading: true,
+  };
+  getRandomUser = async () => {
+    this.setState({
+      loading: true,
+    });
+
+    const {
+      data: {results},
+    } = await axios.get('https://randomuser.me/api/');
+
+    const {
+      name: {first, last},
+    } = results[0];
+
+    this.setState({
+      name: first,
+      surname: last,
+      loading: false,
+    });
   };
 
   componentDidMount() {
-    axios
-      .get('https://randomuser.me/api/')
-      .then(user => user.data.results[0])
-      .then(user => {
-        this.setState({
-          name: user.name.first,
-          surname: user.name.last,
-          loading: false,
-        });
-      });
+    this.getRandomUser();
   }
 
   render() {
@@ -39,6 +49,8 @@ export default class App extends Component {
             {name} {surname}
           </Text>
         )}
+
+        <Button title="Random User" onPress={this.getRandomUser} />
       </SafeAreaView>
     );
   }
@@ -47,7 +59,7 @@ export default class App extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     backgroundColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center',
