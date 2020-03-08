@@ -8,17 +8,63 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  Platform,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
+import axios from 'axios';
 
 import dataIcerik from '../../data';
 
 const {width} = Dimensions.get('window');
-
+const isIOS = Platform.OS === 'ios';
 export default class FlatListExample extends Component {
   state = {
     text: '',
-    contacts: dataIcerik,
+    contacts: [],
+    allContacts: [],
+    page: 1,
+  };
+  constructor() {
+    super();
+    this.duringMomentum = false;
+  }
+
+  componentDidMount(): void {
+    this.getContacts();
+  }
+
+  getContacts = async () => {
+    this.setState({
+      loading: true,
+    });
+
+    const {
+      data: {results: contacts}, // results ı contacts adını al
+    } = await axios.get(
+      `https://randomuser.me/api?results=10&page${this.state.page}`,
+    );
+
+    const users = [...this.state.contacts, ...contacts];
+    this.setState({
+      contacts: users,
+      loading: false,
+      allContacts: users,
+    });
+  };
+
+  loadMore = () => {
+    if (!this.duringMomentum) {
+      this.setState(
+        {
+          page: this.state.page + 1,
+        },
+        () => {
+          this.getContacts();
+        },
+      );
+      this.duringMomentum = false;
+    }
   };
 
   renderContactsItem = ({item, index}) => {
@@ -28,19 +74,30 @@ export default class FlatListExample extends Component {
           styles.itemContainer,
           {backgroundColor: index % 2 === 0 ? 'white' : '#efefef'},
         ]}>
-        <Image source={{uri: item.picture}} style={styles.image} />
+        <Image source={{uri: item.picture.medium}} style={styles.image} />
         <View style={styles.nameContainer}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.company}>{item.company}</Text>
+          <Text style={styles.name}>{item.name.first}</Text>
+          <Text style={styles.company}>{item.location.state}</Text>
         </View>
       </TouchableOpacity>
     );
   };
-
+  renderFooter = () => {
+    if (!this.state.loading) {
+      return null;
+    }
+    return (
+      <View style={{paddingVertical: 30}}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  };
   renderHeader = () => {
     const {text} = this.state;
     return (
       <TextInput
+        onFocus={() => (this.duringMomentum = true)}
+        onBlur={() => (this.duringMomentum = false)}
         onChangeText={text => {
           this.setState({
             text,
@@ -58,8 +115,8 @@ export default class FlatListExample extends Component {
   };
 
   searchFilter = text => {
-    const newData = dataIcerik.filter(item => {
-      const listItem = `${item.name.toLowerCase()}${item.company.toLowerCase()}`;
+    const newData = this.state.allContacts.filter(item => {
+      const listItem = `${item.name.first.toLowerCase()}${item.location.state.toLowerCase()}`;
       return listItem.indexOf(text.toLowerCase()) > -1;
     });
 
@@ -72,10 +129,13 @@ export default class FlatListExample extends Component {
     return (
       <SafeAreaView style={styles.container}>
         <FlatList
+          ListFooterComponent={this.renderFooter}
           ListHeaderComponent={this.renderHeader}
           renderItem={this.renderContactsItem}
           data={this.state.contacts}
           keyExtractor={(item, index) => index.toString()} // veya keyExtractor={ item=> item._id }
+          onEndReached={this.loadMore}
+          onEndReachedThreshold={isIOS ? 1 : 20} // 0 ise sadece en dibe geldiginizde loadMore yapılır
         />
       </SafeAreaView>
     );
