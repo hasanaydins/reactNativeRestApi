@@ -1,9 +1,6 @@
 import React, {Component} from 'react';
-import {StyleSheet, Dimensions, SafeAreaView, Text, Button} from 'react-native';
+import {StyleSheet, Dimensions, SafeAreaView} from 'react-native';
 import FlatListExample from './src/components/FlatList';
-import axios from 'axios';
-
-const {width} = Dimensions.get('window');
 
 export default class App extends Component {
   render() {

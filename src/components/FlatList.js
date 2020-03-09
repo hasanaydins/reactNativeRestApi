@@ -14,8 +14,6 @@ import {
 } from 'react-native';
 import axios from 'axios';
 
-import dataIcerik from '../../data';
-
 const {width} = Dimensions.get('window');
 const isIOS = Platform.OS === 'ios';
 export default class FlatListExample extends Component {
